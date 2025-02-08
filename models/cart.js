@@ -1,3 +1,4 @@
+/*
 const fs = require('fs');
 const path = require('path');
 
@@ -76,3 +77,30 @@ module.exports = class Cart {
   });
   }
 };
+
+*/
+
+const { Sequelize, DataTypes, Model } = require('sequelize');
+const sequelize = require('../util/database')
+
+class Cart extends Model { }
+
+Cart.init(
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
+        },
+    },
+    {
+        // Other model options go here
+        sequelize,
+        modelName: 'Cart',
+        tableName: 'carts'
+    },
+);
+
+// the defined model is the class itself
+console.log(Cart === sequelize.models.Cart); // true
+module.exports = Cart
