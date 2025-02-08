@@ -54,7 +54,7 @@ exports.getCart = async (req, res, next) => {
     let cart = await req.user.getCart()
     let products = [];
     if (cart) {
-      products =  await cart.getProducts();
+      products = await cart.getProducts();
     }
 
     res.render('shop/cart', {
@@ -131,10 +131,51 @@ exports.addCart = async (req, res, next) => {
   // });
 };
 
-exports.getOrders = (req, res, next) => {
+exports.submitOrder = async (req, res, next) => {
+
+  try {
+
+    let cart = await req.user.getCart()
+    if (!cart) {
+      //no item in cart
+    }
+    let cartProducts = await cart.getProducts()
+
+    //create an order
+    let order = await req.user.createOrder()
+
+    await order.addProducts(cartProducts.map(product =>{
+      product.OrderItem = {quantity : product.CartItem.quantity}
+      return product
+    }))
+    // for (const product of cartProducts) {
+
+    //   let qtyInCart = product.CartItem.quantity
+
+    //   await order.addProducts(cartProducts, { through: { quantity: qtyInCart } })
+    // }
+
+    //clear the cart
+    cart.setProducts(null)
+    res.redirect('/orders')
+  } catch (error) {
+
+  }
+
+
+
+}
+
+exports.getOrders = async (req, res, next) => {
+
+  let orders = await req.user.getOrders({include: Product})
+
+  // console.log(orders, 'orders');
+  
   res.render('shop/orders', {
     path: '/orders',
-    pageTitle: 'Your Orders'
+    pageTitle: 'Your Orders',
+    orders: orders
   });
 };
 
@@ -147,7 +188,7 @@ exports.getCheckout = (req, res, next) => {
 exports.postCartDeleteProduct = async (req, res, next) => {
   const prodId = req.body.productId;
   const product = await Product.findByPk(prodId)
-  
+
   let cart = await req.user.getCart()
 
   await cart.removeProduct(product)

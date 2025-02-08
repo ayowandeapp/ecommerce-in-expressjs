@@ -36,7 +36,7 @@ app.use(shopRoutes);
 app.use(errorController.get404);
 
 sequelize
-    .sync({ alter: true }) // Use `force: true` only in development to reset DB
+    .sync() // Use `force: true` only in development to reset DB
     .then(() => {
         console.log('Database synced successfully')
         return User.findOne({ where: { id: 1 } })
