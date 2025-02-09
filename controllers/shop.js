@@ -4,12 +4,17 @@ const CartItem = require('../models/cart-item');
 const { where } = require('sequelize');
 
 exports.getProducts = (req, res, next) => {
+ 
+  console.log(req.session.isLoggedin, 'session producrt')
+
+
   Product.findAll()
     .then((products) => {
       res.render('shop/product-list', {
         prods: products,
         pageTitle: 'All Products',
-        path: '/products'
+        path: '/products',
+        isAuthenticated: req.session.isLoggedin
       });
 
     }).catch(err => {
@@ -24,7 +29,8 @@ exports.showProduct = (req, res, next) => {
       res.render('shop/product-detail', {
         product: product,
         pageTitle: `Show Product`,
-        path: `/products`
+        path: `/products`,
+        isAuthenticated: req.session.isLoggedin === true
       });
 
     }).catch(err => {
@@ -35,11 +41,11 @@ exports.showProduct = (req, res, next) => {
 exports.getIndex = (req, res, next) => {
   Product.findAll()
     .then(products => {
-      // console.log(products, 'res');
       res.render('shop/index', {
         prods: products,
         pageTitle: 'Shop',
-        path: '/'
+        path: '/',
+        isAuthenticated: req.session.isLoggedin === true
       });
 
     }).catch(err => {
@@ -56,11 +62,13 @@ exports.getCart = async (req, res, next) => {
     if (cart) {
       products = await cart.getProducts();
     }
+    console.log(req.session.isLoggedIn, 'carttttttt')
 
     res.render('shop/cart', {
       path: '/cart',
       pageTitle: 'Your Cart',
-      products: products
+      products: products,
+      isAuthenticated: req.session.isLoggedIn
     });
 
   } catch (error) {
@@ -175,14 +183,16 @@ exports.getOrders = async (req, res, next) => {
   res.render('shop/orders', {
     path: '/orders',
     pageTitle: 'Your Orders',
-    orders: orders
+    orders: orders,
+    isAuthenticated: req.session.isLoggedIn
   });
 };
 
 exports.getCheckout = (req, res, next) => {
   res.render('shop/checkout', {
     path: '/checkout',
-    pageTitle: 'Checkout'
+    pageTitle: 'Checkout',
+    isAuthenticated: req.session.isLoggedIn
   });
 };
 exports.postCartDeleteProduct = async (req, res, next) => {
