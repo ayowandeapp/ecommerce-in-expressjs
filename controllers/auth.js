@@ -1,5 +1,7 @@
 const { User } = require("../models");
-var bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs');
+const sendMail = require('./../services/mailer')
+
 
 exports.getLogin = async (req, res, next) => {
 
@@ -71,26 +73,38 @@ exports.getSignup = async (req, res, next) => {
 };
 
 exports.postSignup = async (req, res, next) => {
-    const email = req.body.email
-    const password = req.body.password
-    const confirmPassword = req.body.confirmPassword
 
-    if(!email || !password){        
-        req.flash('error', 'Credentials required!')
-        return res.redirect('/signup')
+    try {
+
+        const email = req.body.email
+        const password = req.body.password
+        const confirmPassword = req.body.confirmPassword
+
+        if (!email || !password) {
+            req.flash('error', 'Credentials required!')
+            return res.redirect('/signup')
+        }
+
+        const user = await User.findOne({ where: { email: email } })
+
+        if (!!user) {
+            // throw new Error("A user with the email already exist!");
+            req.flash('error', 'A user with the email already exist!')
+            return res.redirect('/signup')
+        }
+
+        bcrypt.hash(password, 12, function (err, hash) {
+            User.create({ email: email, name: ' ', password: hash })
+        })
+
+        await sendMail(
+            email,
+            'Welcome to Our App!',
+            'Thank you for signing up.',
+            '<h1>Welcome to Our App!</h1><p>We are excited to have you. Kindly login with your email and password to continue.</p>'
+        );
+        return res.redirect('/login')
+    } catch (error) {
+
     }
-
-
-    const user = await User.findOne({ where: { email: email } })
-
-    if (!!user) {
-        // throw new Error("A user with the email already exist!");
-        req.flash('error', 'A user with the email already exist!')
-        return res.redirect('/signup')
-    }
-
-    bcrypt.hash(password, 12, function (err, hash) {
-        User.create({ email: email, name: ' ', password: hash })
-    })
-    res.redirect('/login')
 };
