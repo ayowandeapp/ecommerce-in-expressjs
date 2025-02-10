@@ -4,6 +4,8 @@ const session = require('express-session')
 const MySQLStore = require('express-mysql-session')(session);
 const express = require('express');
 const bodyParser = require('body-parser');
+const lusca = require('lusca');
+const flash = require('connect-flash');
 
 const errorController = require('./controllers/error');
 
@@ -38,13 +40,13 @@ const sessionStore = new MySQLStore({
     expiration: 86400000, // Session valid for 1 day
 });
 
-// 🔹 Initialize session middleware with MySQL store
+// Initialize session middleware with MySQL store
 app.use(session({
     secret: 'your_secret_key', // Change to a strong secret
     name: 'sessionId',
     resave: false,
     saveUninitialized: false,
-    store: sessionStore, // 🔥 Use MySQL session store
+    store: sessionStore, // Use MySQL session store
     cookie: {
         maxAge: 86400000, // 1 day
         httpOnly: true,
@@ -58,15 +60,30 @@ sessionStore.onReady().then(() => {
     // Something went wrong.
     console.error(error);
 });
-
+app.use(lusca.csrf());
 app.use((req, res, next) => {
-    User.findOne({ where: { id: 1 } })
-        .then(user => {
+    res.locals.isAuthenticated = req.session.isAuthenticated
+    res.locals.csrfToken = req.csrfToken();
+    next();
+});
+app.use(flash());
+app.use(async (req, res, next) => {
+    try {
+        if (!req.session.user) {
+            req.user = null;
+            return next();
+        }
+        const user = await User.findByPk(req.session.user.id);
+        
+        if (!user) {
+            req.user = null;
+        } else {
             req.user = user;
-            next()
-
-        })
-        .catch(err => console.log(err))
+        }
+        next();
+    } catch (error) {
+        
+    }
 })
 
 app.use('/admin', adminRoutes);
@@ -79,12 +96,6 @@ sequelize
     .sync() // Use `force: true` only in development to reset DB
     .then(() => {
         console.log('Database synced successfully')
-        // return User.findOne({ where: { id: 1 } })
-    }).then(() => {
-        // if (!user) {
-        //     user = User.create({ name: 'admin', email: 'email@test.com' })
-        // }
-        // return user
     }).then(() => {
         // console.log(user, 'user');
 

@@ -5,16 +5,12 @@ const { where } = require('sequelize');
 
 exports.getProducts = (req, res, next) => {
  
-  console.log(req.session.isLoggedin, 'session producrt')
-
-
-  Product.findAll()
+   Product.findAll()
     .then((products) => {
       res.render('shop/product-list', {
         prods: products,
         pageTitle: 'All Products',
         path: '/products',
-        isAuthenticated: req.session.isLoggedin
       });
 
     }).catch(err => {
@@ -30,7 +26,6 @@ exports.showProduct = (req, res, next) => {
         product: product,
         pageTitle: `Show Product`,
         path: `/products`,
-        isAuthenticated: req.session.isLoggedin === true
       });
 
     }).catch(err => {
@@ -45,7 +40,6 @@ exports.getIndex = (req, res, next) => {
         prods: products,
         pageTitle: 'Shop',
         path: '/',
-        isAuthenticated: req.session.isLoggedin === true
       });
 
     }).catch(err => {
@@ -62,13 +56,10 @@ exports.getCart = async (req, res, next) => {
     if (cart) {
       products = await cart.getProducts();
     }
-    console.log(req.session.isLoggedIn, 'carttttttt')
-
     res.render('shop/cart', {
       path: '/cart',
       pageTitle: 'Your Cart',
       products: products,
-      isAuthenticated: req.session.isLoggedIn
     });
 
   } catch (error) {
@@ -184,7 +175,6 @@ exports.getOrders = async (req, res, next) => {
     path: '/orders',
     pageTitle: 'Your Orders',
     orders: orders,
-    isAuthenticated: req.session.isLoggedIn
   });
 };
 
@@ -192,7 +182,7 @@ exports.getCheckout = (req, res, next) => {
   res.render('shop/checkout', {
     path: '/checkout',
     pageTitle: 'Checkout',
-    isAuthenticated: req.session.isLoggedIn
+    
   });
 };
 exports.postCartDeleteProduct = async (req, res, next) => {

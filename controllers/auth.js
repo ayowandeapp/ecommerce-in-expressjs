@@ -1,24 +1,52 @@
 const { User } = require("../models");
+var bcrypt = require('bcryptjs');
 
 exports.getLogin = async (req, res, next) => {
+
+    let message = req.flash('error')
+    message = message.length > 0 ? message : null
 
     res.render('auth/login', {
         path: '/login',
         pageTitle: 'Login',
-        isAuthenticated: false
+        isAuthenticated: false,
+        errorMsg: message
     });
 };
 
 exports.postLogin = async (req, res, next) => {
-    let user = await User.findOne({ where: { id: 1 } })
+    try {
 
-    req.session.isLoggedIn = true;
-    req.session.user = user;
-    req.session.save(function (err) {
-        if (err) return next(err)
-        console.log(req.session.isLoggedin, 'session')
-        res.redirect('/')
-    })
+        const { email, password } = req.body;
+
+        let user = await User.findOne({ where: { email: email } })
+
+        if (!user) {
+            console.log('User not found');
+            req.flash('error', 'Invalid credentials')
+            return res.redirect('/login')
+        }
+
+        const matched = await bcrypt.compare(password, user.password)
+
+        if (!matched) {
+            console.log('Password incorrect');
+            req.flash('error', 'Invalid credentials')
+            return res.redirect('/login')
+        }
+        req.session.isAuthenticated = matched;
+        req.session.user = user;
+
+        await req.session.save();
+
+        // console.log(req.session.isAuthenticated, matched, req.session.user, 'session')
+        return res.redirect('/')
+    } catch (error) {
+
+        console.log(error, 'error')
+
+        return res.redirect('/login');
+    }
 };
 
 
@@ -31,10 +59,14 @@ exports.postLogout = async (req, res, next) => {
 
 exports.getSignup = async (req, res, next) => {
 
+    let message = req.flash('error')
+    message = message.length > 0 ? message : null
+
     res.render('auth/signup', {
         path: '/login',
         pageTitle: 'Login',
-        isAuthenticated: false
+        isAuthenticated: false,
+        errorMsg: message
     });
 };
 
@@ -43,12 +75,22 @@ exports.postSignup = async (req, res, next) => {
     const password = req.body.password
     const confirmPassword = req.body.confirmPassword
 
-    const user = await User.findOne({where: {email: email}})
-
-    if(!!user){
-        // throw new Error("A user with the email already exist!");
-        res.redirect('/signup')        
+    if(!email || !password){        
+        req.flash('error', 'Credentials required!')
+        return res.redirect('/signup')
     }
-    await User.create({email: email,name:' '})
-    res.redirect('/login')  
+
+
+    const user = await User.findOne({ where: { email: email } })
+
+    if (!!user) {
+        // throw new Error("A user with the email already exist!");
+        req.flash('error', 'A user with the email already exist!')
+        return res.redirect('/signup')
+    }
+
+    bcrypt.hash(password, 12, function (err, hash) {
+        User.create({ email: email, name: ' ', password: hash })
+    })
+    res.redirect('/login')
 };

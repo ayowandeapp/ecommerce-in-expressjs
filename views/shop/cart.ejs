@@ -19,6 +19,7 @@
                 <hr>
                 <div style="text-align: center;">
                     <form action="/create-order" method="post">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <button type="submit" class="btn">Order now!</button>
                     </form>
                 </div>
