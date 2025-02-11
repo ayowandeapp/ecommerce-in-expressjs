@@ -2,10 +2,21 @@ const { where } = require('sequelize');
 const Product = require('../models/product');
 
 exports.getAddProduct = (req, res, next) => {
+  
+  let message = req.flash('error')
+  message = message.length > 0 ? message.join('\n') : null;
+  
+  const oldInput = req.session.oldInput || {}
+  req.session.oldInput = null
+
   res.render('admin/edit-product', {
     pageTitle: 'Add Product',
     path: '/admin/add-product',
     editing: false,
+    oldInput: oldInput,
+    errorMsg: message,
+    product: {},
+
   });
 };
 
@@ -32,6 +43,14 @@ exports.postAddProduct = (req, res, next) => {
 };
 
 exports.getEditProduct = (req, res, next) => {
+   
+  let message = req.flash('error')
+  message = message.length > 0 ? message.join('\n') : null;
+  
+  const oldInput = req.session.oldInput || {}
+  req.session.oldInput = null
+
+  console.log(oldInput, 'oldiput')
   const editMode = req.query.edit;
   if (!editMode) {
     return res.redirect('/');
@@ -44,6 +63,8 @@ exports.getEditProduct = (req, res, next) => {
         path: '/admin/edit-product',
         editing: editMode,
         product: product,
+        oldInput: oldInput,
+        errorMsg: message,
 
       });
 

@@ -7,17 +7,21 @@ const { where, Op } = require("sequelize");
 exports.getLogin = async (req, res, next) => {
 
     let message = req.flash('error')
-    message = message.length > 0 ? message : null
+    message = message.length > 0 ? message.join('\n') : null;
+   
+    const oldInput = req.session.oldInput || {};
+    req.session.oldInput = null;
 
     res.render('auth/login', {
         path: '/login',
         pageTitle: 'Login',
         isAuthenticated: false,
-        errorMsg: message
+        errorMsg: message,
+        oldInput: oldInput
     });
 };
 
-exports.postLogin = async (req, res, next) => {
+exports.postLogin = [ async (req, res, next) => {
     try {
 
         const { email, password } = req.body;
@@ -50,7 +54,7 @@ exports.postLogin = async (req, res, next) => {
 
         return res.redirect('/login');
     }
-};
+}];
 
 
 exports.postLogout = async (req, res, next) => {
@@ -63,13 +67,17 @@ exports.postLogout = async (req, res, next) => {
 exports.getSignup = async (req, res, next) => {
 
     let message = req.flash('error')
-    message = message.length > 0 ? message : null
+    message = message.length > 0 ? message.join('\n') : null;
+
+    const oldInput = req.session.oldInput || {};
+    req.session.oldInput = null;
 
     res.render('auth/signup', {
         path: '/login',
         pageTitle: 'Login',
         isAuthenticated: false,
-        errorMsg: message
+        errorMsg: message,
+        oldInput: oldInput
     });
 };
 
@@ -85,15 +93,6 @@ exports.postSignup = async (req, res, next) => {
             req.flash('error', 'Credentials required!')
             return res.redirect('/signup')
         }
-
-        const user = await User.findOne({ where: { email: email } })
-
-        if (!!user) {
-            // throw new Error("A user with the email already exist!");
-            req.flash('error', 'A user with the email already exist!')
-            return res.redirect('/signup')
-        }
-        
         const hashedPassword = await bcrypt.hash(password, 12);
         await User.create({ email: email, name: ' ', password: hashedPassword })
 
@@ -112,7 +111,7 @@ exports.postSignup = async (req, res, next) => {
 exports.getReset = (req, res, next) => {
 
     let message = req.flash('error')
-    message = message.length > 0 ? message : null
+    message = message.length > 0 ? message.join('\n') : null;
 
     res.render('auth/reset', {
         path: '/reset',
@@ -174,7 +173,7 @@ exports.getNewPassword = async (req, res, next) => {
     }
 
     let message = req.flash('error')
-    message = message.length > 0 ? message : null
+    message = message.length > 0 ? message.join('\n') : null;
 
     res.render('auth/new-password', {
         path: '/new-password',
