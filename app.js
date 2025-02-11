@@ -93,7 +93,7 @@ app.use(authRoutes);
 app.use(errorController.get404);
 
 sequelize
-    .sync() // Use `force: true` only in development to reset DB
+    .sync({}) // Use `force: true` only in development to reset DB
     .then(() => {
         console.log('Database synced successfully')
     }).then(() => {

@@ -1,3 +1,4 @@
+const { where } = require('sequelize');
 const Product = require('../models/product');
 
 exports.getAddProduct = (req, res, next) => {
@@ -23,7 +24,7 @@ exports.postAddProduct = (req, res, next) => {
     description: description
   }).then((res) => {
     console.log('created product')
-    
+
   }).catch(err => {
     console.log(err)
   });;
@@ -36,14 +37,14 @@ exports.getEditProduct = (req, res, next) => {
     return res.redirect('/');
   }
   const prodId = req.params.productId;
-  Product.findOne({ where: { id: prodId }})
+  Product.findOne({ where: { id: prodId } })
     .then((product) => {
       res.render('admin/edit-product', {
         pageTitle: 'Edit Product',
         path: '/admin/edit-product',
         editing: editMode,
         product: product,
-        
+
       });
 
     }).catch(err => {
@@ -52,38 +53,41 @@ exports.getEditProduct = (req, res, next) => {
     })
 };
 
-exports.postEditProduct = (req, res, next) => {
+exports.postEditProduct = async (req, res, next) => {
   console.log(req.body)
-  const prodId = req.body.productId;
-  const updatedTitle = req.body.title;
-  const updatedPrice = req.body.price;
-  const updatedImageUrl = req.body.imageUrl;
-  const updatedDesc = req.body.description;
+  const { productId, title, price, imageUrl, description } = req.body
 
-  Product.update(
+  const product = await Product.findOne(
     {
-      title: updatedTitle,
-      price: updatedPrice,
-      imageUrl: updatedImageUrl,
-      'description': updatedDesc
-    },
+      where: {
+        id: productId,
+        userId: req.user.id
+      }
+    })
+  if (!product) {
+    return res.redirect('/admin/products')
+  }
+
+  await product.update(
     {
-      where: { id: prodId }
+      title: title,
+      price: price,
+      imageUrl: imageUrl,
+      description: description
     }
-  ).then(() => {
+  )
 
-    res.redirect('/admin/products');
-  })
+  return res.redirect('/admin/products');
 };
 
 exports.getProducts = (req, res, next) => {
-  Product.findAll()
+  req.user.getProducts()
     .then(products => {
       res.render('admin/products', {
         prods: products,
         pageTitle: 'Admin Products',
         path: '/admin/products',
-        
+
       });
     })
 };
@@ -91,7 +95,7 @@ exports.getProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findOne({ where: { id: prodId }})
+  Product.findOne({ where: { id: prodId, userId: req.user.id } })
     .then(product => {
       // console.log(product, 'pro', prodId)
       return product.destroy()
