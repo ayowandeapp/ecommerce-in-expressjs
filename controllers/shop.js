@@ -1,11 +1,12 @@
 const Product = require('../models/product');
-const Cart = require('../models/cart');
-const CartItem = require('../models/cart-item');
-const { where } = require('sequelize');
+const fs = require('fs');
+const path = require('path');
+const Order = require('../models/order');
+const PDFDocument = require('pdfkit');
 
 exports.getProducts = (req, res, next) => {
- 
-   Product.findAll()
+
+  Product.findAll()
     .then((products) => {
       res.render('shop/product-list', {
         prods: products,
@@ -47,7 +48,6 @@ exports.getIndex = (req, res, next) => {
     });
 
 };
-
 
 exports.getCart = async (req, res, next) => {
   try {
@@ -143,8 +143,8 @@ exports.submitOrder = async (req, res, next) => {
     //create an order
     let order = await req.user.createOrder()
 
-    await order.addProducts(cartProducts.map(product =>{
-      product.OrderItem = {quantity : product.CartItem.quantity}
+    await order.addProducts(cartProducts.map(product => {
+      product.OrderItem = { quantity: product.CartItem.quantity }
       return product
     }))
     // for (const product of cartProducts) {
@@ -167,10 +167,8 @@ exports.submitOrder = async (req, res, next) => {
 
 exports.getOrders = async (req, res, next) => {
 
-  let orders = await req.user.getOrders({include: Product})
+  let orders = await req.user.getOrders({ include: Product })
 
-  // console.log(orders, 'orders');
-  
   res.render('shop/orders', {
     path: '/orders',
     pageTitle: 'Your Orders',
@@ -182,9 +180,10 @@ exports.getCheckout = (req, res, next) => {
   res.render('shop/checkout', {
     path: '/checkout',
     pageTitle: 'Checkout',
-    
+
   });
 };
+
 exports.postCartDeleteProduct = async (req, res, next) => {
   const prodId = req.body.productId;
   const product = await Product.findByPk(prodId)
@@ -199,3 +198,67 @@ exports.postCartDeleteProduct = async (req, res, next) => {
   //   res.redirect('/cart');
   // });
 };
+
+
+exports.getInvoice = async (req, res, next) => {
+  const orderId = req.params.orderId
+  const order = await Order.findByPk(orderId)
+  if (!order || (req.user.id != order.userId)) {
+    return res.redirect(req.get('referer'));
+  }
+  const invoiceName = `invoice-${orderId}.pdf`
+  const invoicePath = path.join('data', 'invoices', invoiceName)
+
+  // Create a document
+  const doc = new PDFDocument({font: 'Courier'});
+  res.setHeader('Content-Type', 'application/pdf')
+  res.setHeader(
+    'Content-Disposition',
+    'inline; filename="' + invoiceName + '"'
+  )
+  doc.pipe(fs.createWriteStream(invoicePath));
+  doc.pipe(res)
+
+  doc.font('Courier-Bold')
+    .fontSize(20)
+    .text('Invoice', {
+      underline: true
+    })
+    doc.moveDown();
+  doc
+    .text('---------------------------------------')
+  const products = await order.getProducts()
+  let orderTotal = 0
+  doc.moveDown();
+  const arr = []
+  products.forEach(product => {
+    orderTotal += product.OrderItem.quantity * product.price
+    const info = `${product.title} - ${product.OrderItem.quantity} * $${product.price}`
+    // doc.text(info)
+    arr.push(info)
+
+  });
+  doc.list(arr)
+  doc.moveDown();
+  doc
+    .text('---------------------------------------')
+  doc
+    .text(`Order total: $${orderTotal}`)
+  doc.end();
+
+  //preloading data
+  // fs.readFile(invoicePath, (err, data) => {
+  //   if(err){
+  //     return next(err)
+  //   }
+  //   res.setHeader('Content-Type', 'application/pdf')
+  //   res.setHeader('Content-Disposition', 'inline; filename="' + invoiceName+ '"')
+  //   res.send(data)
+  // })
+  //stream data
+  // const file = fs.createReadStream(invoicePath)
+
+  // file.pipe(res)
+
+
+}

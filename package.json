@@ -26,8 +26,10 @@
     "express-session": "^1.18.1",
     "express-validator": "^7.2.1",
     "lusca": "^1.7.0",
+    "multer": "^1.4.5-lts.1",
     "mysql2": "^3.12.0",
     "nodemailer": "^6.10.0",
+    "pdfkit": "^0.16.0",
     "pug": "^3.0.3",
     "sequelize": "^6.37.5"
   }

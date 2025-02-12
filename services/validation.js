@@ -72,7 +72,7 @@ const validatePasswordResetConfirm = [
 
 const validateAddProduct = [
     body('title').trim().notEmpty().isString().isLength({ min: 3 }).withMessage('Product title is required!'),
-    body('imageUrl').trim().notEmpty().isURL().withMessage('Product image_url is required!'),
+    // check('image').notEmpty().withMessage('Product image is required!'),
     body('price').trim().notEmpty().isNumeric().withMessage('Product price is required!'),
     body('description').trim().notEmpty().isLength({ min: 8 }).withMessage('Product description is required!'),
 ]

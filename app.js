@@ -20,8 +20,12 @@ const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
+const upload = require('./middleware/file-upload');
+
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(upload.single('image'))
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 //initialize session middleware
 
@@ -57,6 +61,11 @@ sessionStore.onReady().then(() => {
     console.error(error);
 });
 
+app.use(flash());
+// app.use((req, res, next) => {
+//     console.log('Session:', req.session, res.locals.csrfToken);
+//     next();
+// });
 app.use(lusca.csrf());
 
 app.use((req, res, next) => {
@@ -65,7 +74,11 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(flash());
+
+// app.use((req, res, next) => {
+//     console.log('after Session:', req.session, res);
+//     next();
+// });
 
 app.use(async (req, res, next) => {
     try {
