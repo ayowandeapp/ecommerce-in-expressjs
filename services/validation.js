@@ -1,14 +1,13 @@
 const { body, validationResult, matchedData, check } = require('express-validator');
 const { User } = require('../models');
 
-
 const validate = (validations) => {
     return async (req, res, next) => {
         await Promise.all(validations.map(validation => validation.run(req)));
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            const flasMsg = errors.array().map(error => `${error.path}: ${error.msg}`).join('\n')
+            const flasMsg = errors.array().map(error => `${error.path}: ${error.msg} <br />`).join('\n')
             req.flash('error', flasMsg)
             req.session.oldInput = req.body;
             // return res.status(400).json({ errors: errors.array() });
@@ -24,17 +23,15 @@ const validate = (validations) => {
 const validateUserRegistration = [
     // body('name').trim().notEmpty().withMessage('Name is required'),
     body('email').isEmail().normalizeEmail().withMessage('Invalid email format')
-    .custom(async value => {
-        
-        const user = await User.findOne({ where: { email: value } })
+        .custom(async value => {
 
-        if (user) {
-            // throw new Error("A user with the email already exist!");
-            throw new Error('A user with the email already exist!')
-            
-        }
+            const user = await User.findOne({ where: { email: value } })
 
-    }),
+            if (user) {
+                throw new Error('A user with the email already exist!')
+            }
+
+        }),
     body('password').trim().isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
     body('confirmPassword').trim()
         .custom((value, { req }) => {
@@ -74,10 +71,10 @@ const validatePasswordResetConfirm = [
 ];
 
 const validateAddProduct = [
-    body('title').trim().notEmpty().isString().isLength({ min: 3}).withMessage('Product title is required!'),
+    body('title').trim().notEmpty().isString().isLength({ min: 3 }).withMessage('Product title is required!'),
     body('imageUrl').trim().notEmpty().isURL().withMessage('Product image_url is required!'),
     body('price').trim().notEmpty().isNumeric().withMessage('Product price is required!'),
-    body('description').trim().notEmpty().isLength({ min: 8}).withMessage('Product description is required!'),
+    body('description').trim().notEmpty().isLength({ min: 8 }).withMessage('Product description is required!'),
 ]
 
 const validateEditProduct = [
