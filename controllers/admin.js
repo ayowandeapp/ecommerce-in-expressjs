@@ -145,6 +145,7 @@ exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
   Product.findOne({ where: { id: prodId, userId: req.user.id } })
     .then(product => {
+      deleteFile(product.imageUrl)
       return product.destroy()
     }).then(() => {
       return res.redirect('/admin/products');
