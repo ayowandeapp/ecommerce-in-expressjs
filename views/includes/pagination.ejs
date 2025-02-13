@@ -1,0 +1,11 @@
+<section class="pagination">  
+        <% if (currentPage > 1) { %>
+            <a href="/products?page=<%= currentPage - 1 %>">Previous</a>
+        <% } %>
+    
+        Page <%= currentPage %> of <%= totalPages %>
+    
+        <% if (currentPage < totalPages) { %>
+            <a href="/products?page=<%= currentPage + 1 %>">Next</a>
+        <% } %>
+</section>

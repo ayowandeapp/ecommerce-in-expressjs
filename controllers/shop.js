@@ -4,19 +4,40 @@ const path = require('path');
 const Order = require('../models/order');
 const PDFDocument = require('pdfkit');
 
-exports.getProducts = (req, res, next) => {
+exports.getProducts = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1
+    const limit = 1
+    const offset = (page - 1) * limit
 
-  Product.findAll()
-    .then((products) => {
-      res.render('shop/product-list', {
-        prods: products,
-        pageTitle: 'All Products',
-        path: '/products',
-      });
-
-    }).catch(err => {
-      console.log(err)
+    const {count, rows:products } = await Product.findAndCountAll({
+      limit: limit,
+      offset: offset
     })
+    const totalPages = Math.ceil(count / limit);
+    
+    res.render('shop/product-list', {
+      prods: products,
+      pageTitle: 'All Products',
+      path: '/products',
+      currentPage: page,
+      totalPages,
+    });
+    
+  } catch (error) {
+    
+  }
+  // Product.findAll()
+  //   .then((products) => {
+  //     res.render('shop/product-list', {
+  //       prods: products,
+  //       pageTitle: 'All Products',
+  //       path: '/products',
+  //     });
+
+  //   }).catch(err => {
+  //     console.log(err)
+  //   })
 };
 
 exports.showProduct = (req, res, next) => {
@@ -34,18 +55,40 @@ exports.showProduct = (req, res, next) => {
     });
 };
 
-exports.getIndex = (req, res, next) => {
-  Product.findAll()
-    .then(products => {
-      res.render('shop/index', {
-        prods: products,
-        pageTitle: 'Shop',
-        path: '/',
-      });
+exports.getIndex = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1
+    const limit = 1
+    const offset = (page - 1) * limit
 
-    }).catch(err => {
-      console.log(err)
+    const {count, rows:products } = await Product.findAndCountAll({
+      limit: limit,
+      offset: offset
+    })
+    const totalPages = Math.ceil(count / limit);
+    
+    res.render('shop/index', {
+      prods: products,
+      pageTitle: 'Shop',
+      path: '/',
+      currentPage: page,
+      totalPages,
     });
+    
+  } catch (error) {
+    
+  }
+  // Product.findAll()
+  //   .then(products => {
+  //     res.render('shop/index', {
+  //       prods: products,
+  //       pageTitle: 'Shop',
+  //       path: '/',
+  //     });
+
+  //   }).catch(err => {
+  //     console.log(err)
+  //   });
 
 };
 
